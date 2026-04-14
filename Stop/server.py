@@ -96,28 +96,48 @@ def iniciar_servidor():
 
             # --- CÁLCULO DE PONTOS (Para N jogadores) ---
             categorias = [CEP, NOME, ANIMAL, COR, MSE, COMIDA]
-            
+
             # Para cada jogador...
             for i in range(QTD_JOGADORES):
                 # ...verifica cada uma de suas respostas
                 for categoria in categorias:
-                    resposta_do_jogador = categoria[i]
                     
-                    # Se a resposta dele aparece só 1 vez na lista, é única (3 pontos)
-                    if categoria.count(resposta_do_jogador) == 1:
+                    # CORREÇÃO: Pegar a resposta real do jogador na lista em vez de ""
+                    resposta_do_jogador = categoria[i].strip() 
+                    
+                    # 1. VALIDAÇÃO: 
+                    # Se a resposta estiver vazia OU não começar com a letra certa...
+                    if len(resposta_do_jogador) == 0 or resposta_do_jogador[0].upper() != LETRA:
+                        continue # ...o jogador ganha 0 pontos e o código pula para a próxima palavra
+
+
+                    # Agora verificamos se é única (3 pontos) ou repetida (1 ponto)
+                    # Limpamos todas as respostas da categoria para comparar direito
+                    categoria_limpa = [resp.strip() for resp in categoria]
+                    
+                    if categoria_limpa.count(resposta_do_jogador) == 1:
                         pontos_jogadores[i] += 3
-                    # Se aparece mais de 1 vez, alguém respondeu igual (1 ponto)
                     else:
                         pontos_jogadores[i] += 1
 
+
             # Monta o resultado final formatado para enviar aos clientes
-            resultado = f"Rodada {rodada+1} | Placar: "
+            resultado = f"\n\n\n\n\n\n\nRodada {rodada+1} | Placar: "
             for i in range(QTD_JOGADORES):
                 resultado += f"J{i+1}: {pontos_jogadores[i]} pts | "
             
+            vencedores = ""
+            maior = max(pontos_jogadores)
+            for i in range(QTD_JOGADORES):
+                if pontos_jogadores[i] == maior:
+                    vencedores += f"Vencedor é o jogador {i+1}\n" 
+
             # Envia o placar para todos
+            resultado += "\n" + vencedores
             for conn in conexoes:
                 conn.sendall(resultado.encode())
+
+            print(resultado)
             
             # Pausa rápida para o cliente processar
             sleep(0.5)
